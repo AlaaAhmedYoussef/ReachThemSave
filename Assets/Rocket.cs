@@ -16,6 +16,14 @@ public class Rocket : MonoBehaviour
     //for inspector show
     [SerializeField] float RcsThrust = 100f;
     [SerializeField] float mainThrust = 100f;
+
+    [SerializeField] AudioClip mainEngine_sfx;
+    [SerializeField] AudioClip death_sfx;
+    [SerializeField] AudioClip nextLevel_sfx;
+
+    [SerializeField] ParticleSystem mainEngine_fx;
+    [SerializeField] ParticleSystem death_fx;
+    [SerializeField] ParticleSystem nextLevel_fx;
     // Start is called before the first frame update
     void Start()
     {
@@ -48,15 +56,30 @@ public class Rocket : MonoBehaviour
                 print("fuel");
                 break;
             case "finish":
-                state = State.Transcending;
-                Invoke("LoadNextLevel", 1f);
+                StartSuccessSequence();
                 break;
             default:
-                print("dead");
-                state = State.Dying;
-                Invoke("LoadFirstLevel", 1f);
+                StartDeathSequence();
                 break;
         }
+    }
+
+    private void StartSuccessSequence()
+    {
+        state = State.Transcending;
+        audioSource.Stop();
+        audioSource.PlayOneShot(nextLevel_sfx);
+        nextLevel_fx.Play();
+        Invoke("LoadNextLevel", 1f);
+    }
+
+    private void StartDeathSequence()
+    {
+        state = State.Dying;
+        audioSource.Stop();
+        audioSource.PlayOneShot(death_sfx);
+        death_fx.Play();
+        Invoke("LoadFirstLevel", 1f);
     }
 
     private void LoadNextLevel()
@@ -76,14 +99,17 @@ public class Rocket : MonoBehaviour
         if (Input.GetKey(KeyCode.Space))
         {
             rigidBody.AddRelativeForce(Vector3.up * thrustThisFrame);
+            mainEngine_fx.Play();
+
             if (!audioSource.isPlaying)
             {
-                audioSource.Play();
+                audioSource.PlayOneShot(mainEngine_sfx);
             }
         }
         else
         {
             audioSource.Stop();
+            mainEngine_fx.Stop();
         }
     }
 
