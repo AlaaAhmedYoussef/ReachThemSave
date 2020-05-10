@@ -26,13 +26,19 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Thrust();
-        Rotate();
+        if(state == State.Alive)
+        {
+            Thrust();
+            Rotate();
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         print("collision");
+
+        if (state != State.Alive) return;
+
         switch(collision.gameObject.tag.ToLower())
         {
             case "friendly":
@@ -42,21 +48,27 @@ public class Rocket : MonoBehaviour
                 print("fuel");
                 break;
             case "finish":
-                print("next level");
-                LoadNextScene();
+                state = State.Transcending;
+                Invoke("LoadNextLevel", 1f);
                 break;
             default:
                 print("dead");
-                SceneManager.LoadScene(0);
+                state = State.Dying;
+                Invoke("LoadFirstLevel", 1f);
                 break;
         }
     }
 
-    private static void LoadNextScene()
+    private void LoadNextLevel()
     {
         SceneManager.LoadScene(1);
     }
 
+    private void LoadFirstLevel()
+    {
+        SceneManager.LoadScene(0);
+    }
+   
     private void Thrust()
     {
         float thrustThisFrame = mainThrust * Time.deltaTime;
