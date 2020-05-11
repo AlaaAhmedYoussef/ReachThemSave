@@ -24,6 +24,11 @@ public class Rocket : MonoBehaviour
     [SerializeField] ParticleSystem mainEngine_fx;
     [SerializeField] ParticleSystem death_fx;
     [SerializeField] ParticleSystem nextLevel_fx;
+
+    [SerializeField] float levelLoadDelay = 2f;
+
+    [SerializeField] bool collisionEnable = true;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -36,8 +41,27 @@ public class Rocket : MonoBehaviour
     {
         if(state == State.Alive)
         {
-            Thrust();
-            Rotate();
+            RespondToThrustInput();
+            RespondToRotateInput();
+
+        }
+
+        if(Debug.isDebugBuild)
+        {
+            RespondToDebugKeys(); //only for debug
+        }
+        
+    }
+
+    private void RespondToDebugKeys()
+    {
+        if (Input.GetKey(KeyCode.L))
+        {
+            StartSuccessSequence();
+        }
+        else if (Input.GetKey(KeyCode.C))
+        {
+            collisionEnable = !collisionEnable;
         }
     }
 
@@ -45,7 +69,7 @@ public class Rocket : MonoBehaviour
     {
         print("collision");
 
-        if (state != State.Alive) return;
+        if (state != State.Alive || !collisionEnable) return;
 
         switch(collision.gameObject.tag.ToLower())
         {
@@ -70,7 +94,7 @@ public class Rocket : MonoBehaviour
         audioSource.Stop();
         audioSource.PlayOneShot(nextLevel_sfx);
         nextLevel_fx.Play();
-        Invoke("LoadNextLevel", 1f);
+        Invoke("LoadNextLevel", levelLoadDelay);
     }
 
     private void StartDeathSequence()
@@ -79,12 +103,21 @@ public class Rocket : MonoBehaviour
         audioSource.Stop();
         audioSource.PlayOneShot(death_sfx);
         death_fx.Play();
-        Invoke("LoadFirstLevel", 1f);
+        Invoke("LoadFirstLevel", levelLoadDelay);
     }
 
     private void LoadNextLevel()
     {
-        SceneManager.LoadScene(1);
+        int currentLevelIndex = SceneManager.GetActiveScene().buildIndex;
+        int nextLevelIndex = currentLevelIndex + 1;
+
+        if(nextLevelIndex == SceneManager.sceneCountInBuildSettings)
+        {
+            nextLevelIndex = 0;
+        }
+        
+        SceneManager.LoadScene(nextLevelIndex);
+    
     }
 
     private void LoadFirstLevel()
@@ -92,7 +125,7 @@ public class Rocket : MonoBehaviour
         SceneManager.LoadScene(0);
     }
    
-    private void Thrust()
+    private void RespondToThrustInput()
     {
 
         if (Input.GetKey(KeyCode.Space))
@@ -112,7 +145,7 @@ public class Rocket : MonoBehaviour
         }
     }
 
-    private void Rotate()
+    private void RespondToRotateInput()
     {
         rigidBody.freezeRotation = true; //stop physics when take manual control
 
